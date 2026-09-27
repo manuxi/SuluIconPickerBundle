@@ -1,82 +1,79 @@
 // @flow
 import React from 'react';
-import {fireEvent, render, screen} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import fieldTypeDefaultProps from '../../../fieldTypeDefaultProps';
 
 jest.mock('sulu-admin-bundle/utils/Translator', () => ({
     translate: (key) => key,
 }));
 
+jest.mock('sulu-admin-bundle/stores/userStore', () => ({
+    contentLocale: 'en',
+}));
+
 jest.mock('sulu-admin-bundle/components', () => ({
     Icon: function Icon({name}) {
         return <i data-icon={name} />;
     },
-    Input: function Input({onChange, placeholder, value}) {
-        return <input onChange={(event) => onChange(event.target.value)} placeholder={placeholder} value={value || ''} />;
-    },
-    Loader: function Loader() {
-        return <div>loading</div>;
-    },
-    Overlay: function Overlay({children, confirmDisabled, onConfirm, open}) {
-        return open
-            ? <div data-testid="overlay">{children}<button disabled={confirmDisabled} onClick={onConfirm}>confirm</button></div>
-            : null;
-    },
+}));
+
+// Sulu core's own SingleListOverlay does the actual REST loading/search/pagination and is covered by Sulu's
+// own test suite; this bundle only replaces IconSelection's preview and IconAdapter's tiles (see index.js), so
+// the overlay itself is faked here to keep this test focused and independent of Sulu's list-store internals.
+jest.mock('sulu-admin-bundle/containers/SingleListOverlay', () => function SingleListOverlay({onClose, onConfirm, open}) {
+    return open
+        ? (
+            <div data-testid="overlay">
+                <button onClick={() => onConfirm({id: 'house-door'})} type="button">confirm house-door</button>
+                <button onClick={onClose} type="button">close</button>
+            </div>
+        )
+        : null;
+});
+
+jest.mock('../../../../../src/Resources/js/stores/iconContentStore', () => ({
+    load: jest.fn(),
 }));
 
 import IconSelection from '../../../../../src/Resources/js/containers/Form/fields/IconSelection';
-import iconPoolStore from '../../../../../src/Resources/js/stores/iconPoolStore';
-
-const SPRITE = '/bundles/suluiconpicker/icon-picker/bootstrap-icons/sprite.svg';
+import iconContentStore from '../../../../../src/Resources/js/stores/iconContentStore';
 
 beforeEach(() => {
-    iconPoolStore.requests = {};
-    iconPoolStore.names.clear();
-    iconPoolStore.errors.clear();
-    iconPoolStore.setConfig({
-        defaultPool: 'bootstrap-icons',
-        pools: {
-            'bootstrap-icons': {
-                key: 'bootstrap-icons',
-                names: '/bundles/suluiconpicker/icon-picker/bootstrap-icons/names.json',
-                sprite: SPRITE,
-            },
-        },
-    });
-    global.fetch = jest.fn(() => Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve(['calendar-heart', 'house', 'house-door']),
-    }));
+    iconContentStore.load.mockReset();
+    iconContentStore.load.mockResolvedValue('<svg viewBox="0 0 16 16"><path d="M1 2"/></svg>');
 });
 
+const schemaOptions = {icon_set: {name: 'icon_set', value: 'bootstrap-icons'}};
+
 describe('IconSelection', () => {
-    test('renders the selected icon from the sprite, like single_media_selection', () => {
+    test('renders the resolved icon content next to its name', async() => {
         const {container} = render(
-            <IconSelection {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'calendar-heart'}} />
+            <IconSelection {...fieldTypeDefaultProps} schemaOptions={schemaOptions} value="calendar-heart" />
         );
 
-        expect(container.querySelector('use').getAttribute('href')).toBe(`${SPRITE}#bootstrap-icons-calendar-heart`);
-        expect(screen.getByText('calendar-heart')).toBeInTheDocument();
-        // exactly two buttons: the left "open picker" button and the remove button, as in single_media_selection
+        expect(iconContentStore.load).toHaveBeenCalledWith('bootstrap-icons', 'calendar-heart');
+        expect(await screen.findByText('calendar-heart')).toBeInTheDocument();
+        await waitFor(() => expect(container.querySelector('svg')).not.toBeNull());
+        // exactly two buttons: the left "open picker" button and the remove button, like single_media_selection
         expect(container.querySelectorAll('button')).toHaveLength(2);
     });
 
     test('renders the empty text without value', () => {
-        render(<IconSelection {...fieldTypeDefaultProps} />);
+        render(<IconSelection {...fieldTypeDefaultProps} schemaOptions={schemaOptions} />);
 
-        expect(screen.getByText('sulu_icon_picker.select')).toBeInTheDocument();
+        expect(screen.getByText('sulu_admin.single_icon_selection.select')).toBeInTheDocument();
+        expect(iconContentStore.load).not.toHaveBeenCalled();
     });
 
-    test('shows an error for an unknown icon', async() => {
-        render(<IconSelection {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'gone'}} />);
+    test('shows a warning icon while the content is missing', async() => {
+        iconContentStore.load.mockResolvedValue(undefined);
 
-        expect(await screen.findByText('sulu_icon_picker.unknown_icon')).toBeInTheDocument();
-    });
+        const {container} = render(
+            <IconSelection {...fieldTypeDefaultProps} schemaOptions={schemaOptions} value="does-not-exist" />
+        );
 
-    test('shows an error for an unknown pool', () => {
-        render(<IconSelection {...fieldTypeDefaultProps} value={{pool: 'tabler', name: 'house'}} />);
-
-        expect(screen.getByText('sulu_icon_picker.unknown_pool')).toBeInTheDocument();
+        await screen.findByText('does-not-exist');
+        expect(container.querySelector('[data-icon="su-exclamation-triangle"]')).not.toBeNull();
     });
 
     test('removes the icon', () => {
@@ -88,7 +85,8 @@ describe('IconSelection', () => {
                 {...fieldTypeDefaultProps}
                 onChange={onChange}
                 onFinish={onFinish}
-                value={{pool: 'bootstrap-icons', name: 'house'}}
+                schemaOptions={schemaOptions}
+                value="house"
             />
         );
 
@@ -98,22 +96,32 @@ describe('IconSelection', () => {
         expect(onFinish).toHaveBeenCalled();
     });
 
-    test('selects an icon in the overlay', async() => {
+    test('selects an icon in the overlay', () => {
         const onChange = jest.fn();
+        const onFinish = jest.fn();
 
-        const {container} = render(<IconSelection {...fieldTypeDefaultProps} onChange={onChange} />);
+        const {container} = render(
+            <IconSelection
+                {...fieldTypeDefaultProps}
+                onChange={onChange}
+                onFinish={onFinish}
+                schemaOptions={schemaOptions}
+            />
+        );
 
-        // the real button, not the item container's role="button" div (Sulu's own SingleItemSelection markup)
         fireEvent.click(container.querySelector('button'));
-        fireEvent.change(screen.getByPlaceholderText('sulu_icon_picker.search'), {target: {value: 'door'}});
+        fireEvent.click(screen.getByText('confirm house-door'));
 
-        const tile = await screen.findByTitle('house-door');
-        expect(screen.queryByTitle('calendar-heart')).not.toBeInTheDocument();
+        expect(onChange).toHaveBeenCalledWith('house-door');
+        expect(onFinish).toHaveBeenCalled();
+        expect(screen.queryByTestId('overlay')).not.toBeInTheDocument();
+    });
 
-        fireEvent.click(tile);
-        fireEvent.click(screen.getByText('confirm'));
+    test('does not open the overlay without a configured icon_set', () => {
+        const {container} = render(<IconSelection {...fieldTypeDefaultProps} value={undefined} />);
 
-        expect(onChange).toHaveBeenCalledWith({pool: 'bootstrap-icons', name: 'house-door'});
+        fireEvent.click(container.querySelector('button'));
+
         expect(screen.queryByTestId('overlay')).not.toBeInTheDocument();
     });
 });

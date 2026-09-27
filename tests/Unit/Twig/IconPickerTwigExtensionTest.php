@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Manuxi\SuluIconPickerBundle\Tests\Unit\Twig;
 
-use Manuxi\SuluIconPickerBundle\Pool\BootstrapIconsPool;
-use Manuxi\SuluIconPickerBundle\Pool\IconPoolRegistry;
+use Manuxi\SuluIconPickerBundle\Icon\IconSetResolver;
+use Manuxi\SuluIconPickerBundle\Tests\Unit\FakeIconProvider;
 use Manuxi\SuluIconPickerBundle\Twig\IconPickerTwigExtension;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Asset\Packages;
-use Symfony\Component\Asset\PathPackage;
-use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
 
@@ -18,27 +15,42 @@ class IconPickerTwigExtensionTest extends TestCase
 {
     private function createExtension(bool $debug = false): IconPickerTwigExtension
     {
-        return new IconPickerTwigExtension(
-            new IconPoolRegistry([new BootstrapIconsPool()]),
-            new Packages(new PathPackage('/', new EmptyVersionStrategy())),
-            $debug,
+        $resolver = new IconSetResolver(
+            ['bootstrap-icons' => 'svg://ignored'],
+            ['svg' => new FakeIconProvider()],
         );
+
+        return new IconPickerTwigExtension($resolver, $debug);
     }
 
-    public function testRendersSpriteReference(): void
+    public function testRendersResolvedReference(): void
     {
-        $html = $this->createExtension()->renderIcon(['pool' => 'bootstrap-icons', 'name' => 'calendar-heart'], ['class' => 'me-2']);
+        $html = $this->createExtension()->renderIcon(['name' => 'calendar-heart', 'icon_set' => 'bootstrap-icons'], ['class' => 'me-2']);
 
         $this->assertSame(
-            '<svg class="sulu-icon sulu-icon--bootstrap-icons me-2" width="1em" height="1em" fill="currentColor" aria-hidden="true" focusable="false">'
-            . '<use href="/bundles/suluiconpicker/icon-picker/bootstrap-icons/sprite.svg#bootstrap-icons-calendar-heart"></use></svg>',
+            '<svg class="sulu-icon sulu-icon--bootstrap-icons me-2" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">'
+            . '<path d="M1 2"/></svg>',
             $html,
         );
     }
 
+    public function testPlainNameWithExplicitIconSetOption(): void
+    {
+        $html = $this->createExtension()->renderIcon('house', ['icon_set' => 'bootstrap-icons']);
+
+        $this->assertStringContainsString('<path d="M2 3"/>', $html);
+    }
+
+    public function testPoolPrefixedName(): void
+    {
+        $html = $this->createExtension()->renderIcon('bootstrap-icons:house');
+
+        $this->assertStringContainsString('<path d="M2 3"/>', $html);
+    }
+
     public function testTitleMakesIconAccessible(): void
     {
-        $html = $this->createExtension()->renderIcon('house', ['title' => 'Home "page"', 'size' => 24]);
+        $html = $this->createExtension()->renderIcon('house', ['icon_set' => 'bootstrap-icons', 'title' => 'Home "page"', 'size' => 24]);
 
         $this->assertStringContainsString('role="img" aria-label="Home &quot;page&quot;"', $html);
         $this->assertStringContainsString('width="24" height="24"', $html);
@@ -51,14 +63,16 @@ class IconPickerTwigExtensionTest extends TestCase
 
         $this->assertSame('', $extension->renderIcon(null));
         $this->assertSame('', $extension->renderIcon(''));
-        $this->assertSame('', $extension->renderIcon('does-not-exist'));
+        $this->assertSame('', $extension->renderIcon('does-not-exist', ['icon_set' => 'bootstrap-icons']));
+        $this->assertSame('', $extension->renderIcon('house'));
+        $this->assertSame('', $extension->renderIcon('house', ['icon_set' => 'unknown-set']));
     }
 
     public function testUnknownIconThrowsInDebug(): void
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        $this->createExtension(true)->renderIcon('does-not-exist');
+        $this->createExtension(true)->renderIcon('does-not-exist', ['icon_set' => 'bootstrap-icons']);
     }
 
     public function testFunctionIsRegisteredAndNotEscaped(): void
@@ -66,7 +80,7 @@ class IconPickerTwigExtensionTest extends TestCase
         $twig = new Environment(new ArrayLoader(['icon' => '{{ sulu_icon(icon) }}']));
         $twig->addExtension($this->createExtension());
 
-        $html = $twig->render('icon', ['icon' => ['pool' => 'bootstrap-icons', 'name' => 'house']]);
+        $html = $twig->render('icon', ['icon' => ['name' => 'house', 'icon_set' => 'bootstrap-icons']]);
 
         $this->assertStringStartsWith('<svg ', $html);
     }

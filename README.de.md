@@ -4,9 +4,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/manuxi/SuluIconPickerBundle/blob/main/LICENSE)
 ![Supports Sulu 3.0 or later](https://img.shields.io/badge/%20Sulu->=3.0-0088cc?color=00b2df)
 
-Ein **Icon-Picker** für **Sulu CMS**: Redakteure wählen im Admin ein Icon aus einem durchsuchbaren Raster, das
-Frontend gibt es per Twig als Inline-SVG aus. Die Icons stammen aus SVG-Sprites — kein Icon-Font, keine tausenden
-Einzeldateien.
+Verbessert Sulu CMS' eigenen Feldtyp **`single_icon_selection`**: eine echte Icon-Vorschau im Formular (Core
+zeigt nur den gespeicherten Namen als Text) und eine Twig-Funktion, um das gespeicherte Icon im Frontend
+auszugeben (die es in Core nicht gibt). Baut auf Sulus eigener `icon_sets`-Konfiguration und den Icon-Providern
+auf – kein Sprite-Bau, kein neuer Feldtyp-Name, kein eigenes Speicherformat.
 
 [🇬🇧 Read English](README.md) | **Deutsch**
 
@@ -14,9 +15,8 @@ Einzeldateien.
 
 ## Funktionen & Dokumentation
 
-*   **[Icon Selection](docs/icon_selection.de.md)** - Feldtyp `icon_selection`, gestaltet wie
-    `single_media_selection`, mit Auswahl-Overlay, Twig-Funktion `sulu_icon()`, erweiterbare Icon-Pools
-    (enthalten: Bootstrap Icons)
+*   **[Icon Selection](docs/icon_selection.de.md)** - echte Vorschau + Auswahl-Overlay für das bestehende
+    `single_icon_selection`-Feld, Twig-Funktion `sulu_icon()`, Property-Resolver
 
 ---
 
@@ -37,12 +37,15 @@ return [
 ];
 ```
 
-### 3. Icon-Sprites veröffentlichen
-```bash
-bin/console assets:install
+### 3. Mindestens ein Icon-Set konfigurieren (Sulu-Core, nicht dieses Bundle)
+```yaml
+# config/packages/sulu_admin.yaml
+sulu_admin:
+    icon_sets:
+        bootstrap-icons: 'svg://%kernel.project_dir%/var/icon-sets/bootstrap-icons'
 ```
-Läuft meist bereits über die `auto-scripts` von Composer. Ohne diesen Schritt liefern die Sprites unter
-`/bundles/suluiconpicker/` 404 und das Feld zeigt keine Icons.
+Siehe [docs/icon_selection.de.md](docs/icon_selection.de.md) für das Ordnerformat und den nötigen
+`<param name="icon_set">` an jeder `single_icon_selection`-Property.
 
 ### 4. Admin-Assets einrichten
 
@@ -67,6 +70,10 @@ npm install
 npm run build
 ```
 
+> **Bundle-Update:** Ein einfaches `npm install` aktualisiert eine `file:`-Abhängigkeit nach einem
+> `composer update` nicht immer. Wenn Änderungen nach einem Rebuild nicht ankommen, erst die Kopie löschen:
+> `rm -rf assets/admin/node_modules/sulu-icon-picker-bundle && npm install`.
+
 ---
 
 ## Entwicklung
@@ -74,9 +81,6 @@ npm run build
 ```bash
 composer install
 npm install
-composer test        # PHPUnit
-npm test             # Jest
-npm run build-icons  # Sprites + names.json neu erzeugen
+composer test   # PHPUnit
+npm test        # Jest
 ```
-
-Bootstrap Icons © The Bootstrap Authors, MIT-Lizenz (`src/Resources/public/icon-picker/bootstrap-icons/LICENSE`).

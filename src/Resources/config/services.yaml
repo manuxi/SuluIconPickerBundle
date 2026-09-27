@@ -4,20 +4,12 @@ services:
         autoconfigure: true
         public: false
 
-    Manuxi\SuluIconPickerBundle\Pool\BootstrapIconsPool: ~
-
-    Manuxi\SuluIconPickerBundle\Pool\IconPoolRegistry:
+    Manuxi\SuluIconPickerBundle\Icon\IconSetResolver:
         arguments:
-            $pools: !tagged_iterator sulu_icon_picker.pool
-        public: true
-
-    sulu_icon_picker.pool_registry:
-        alias: Manuxi\SuluIconPickerBundle\Pool\IconPoolRegistry
-        public: true
+            $iconSets: '%sulu_admin.icon_sets%'
+            $iconProviders: !tagged_iterator { tag: 'sulu_admin.icon_provider', index_by: 'type' }
 
     Manuxi\SuluIconPickerBundle\Admin\IconPickerAdmin:
-        arguments:
-            $packages: '@assets.packages'
         tags:
             - { name: 'sulu.admin' }
 
@@ -27,7 +19,6 @@ services:
 
     Manuxi\SuluIconPickerBundle\Twig\IconPickerTwigExtension:
         arguments:
-            $packages: '@assets.packages'
             $debug: '%kernel.debug%'
         tags:
             - { name: 'twig.extension' }

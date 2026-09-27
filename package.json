@@ -2,10 +2,9 @@
     "name": "@manuxi/sulu-icon-picker-bundle",
     "version": "1.0.0",
     "private": true,
-    "description": "Icon picker field type for Sulu CMS",
+    "description": "Enhances Sulu's own single_icon_selection field with a real preview and a Twig function",
     "license": "MIT",
     "scripts": {
-        "build-icons": "node scripts/build-icon-sprite.js",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:coverage": "jest --coverage"
@@ -24,7 +23,6 @@
         "@testing-library/jest-dom": "^5.17.0",
         "@testing-library/react": "^12.1.5",
         "babel-jest": "^26.6.3",
-        "bootstrap-icons": "^1.13.1",
         "core-js": "^3.18.0",
         "identity-obj-proxy": "^3.0.0",
         "jest": "^26.6.3",

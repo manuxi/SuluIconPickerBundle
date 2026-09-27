@@ -1,63 +1,78 @@
 // @flow
 import React from 'react';
 import {observer} from 'mobx-react';
+import {computed, observable} from 'mobx';
 import {Icon} from 'sulu-admin-bundle/components';
 import SingleItemSelection from 'sulu-admin-bundle/components/SingleItemSelection';
+import SingleListOverlay from 'sulu-admin-bundle/containers/SingleListOverlay';
+import userStore from 'sulu-admin-bundle/stores/userStore';
 import {translate} from 'sulu-admin-bundle/utils/Translator';
 import type {FieldTypeProps} from 'sulu-admin-bundle/types';
-import IconSvg from '../../../components/IconSvg';
-import IconSelectionOverlay from '../../IconSelectionOverlay';
-import iconPoolStore from '../../../stores/iconPoolStore';
-import type {IconPool} from '../../../stores/iconPoolStore';
+import type {IObservableValue} from 'mobx/lib/mobx';
+import iconContentStore from '../../../stores/iconContentStore';
 import styles from './iconSelection.scss';
 
-type Value = {
-    name: string,
-    pool: string,
-};
+type Props = FieldTypeProps<?string>;
 
 type State = {
+    content: ?string,
+    loading: boolean,
     overlayOpen: boolean,
 };
 
+/**
+ * Overrides Sulu core's own "single_icon_selection" field (registered under the same key, see
+ * src/Resources/js/index.js) to add a real icon preview - core's version only shows the stored id as
+ * plain text. The picker overlay (search, grid, REST loading) stays Sulu's own SingleListOverlay/IconAdapter,
+ * only the field itself and the icon adapter's tile rendering (see IconAdapter.js) are replaced.
+ */
 @observer
-class IconSelection extends React.Component<FieldTypeProps<?Value>, State> {
-    state = {
+class IconSelection extends React.Component<Props, State> {
+    state: State = {
+        content: undefined,
+        loading: false,
         overlayOpen: false,
     };
 
+    @computed get locale(): IObservableValue<string> {
+        const {formInspector} = this.props;
+
+        return formInspector.locale ? formInspector.locale : observable.box(userStore.contentLocale);
+    }
+
+    get iconSet(): ?string {
+        const {value: iconSet} = this.props.schemaOptions?.icon_set || {};
+
+        return typeof iconSet === 'string' && iconSet ? iconSet : undefined;
+    }
+
     componentDidMount() {
-        this.loadPreviewNames();
+        this.loadPreview();
     }
 
-    componentDidUpdate(prevProps: FieldTypeProps<?Value>) {
-        if (prevProps.value?.pool !== this.props.value?.pool) {
-            this.loadPreviewNames();
+    componentDidUpdate(prevProps: Props) {
+        if (prevProps.value !== this.props.value) {
+            this.loadPreview();
         }
     }
 
-    get fieldPoolKey(): ?string {
-        const {value: pool} = this.props.schemaOptions?.pool || {};
-
-        return typeof pool === 'string' && pool ? pool : iconPoolStore.defaultPool;
-    }
-
-    get previewPoolKey(): ?string {
+    loadPreview() {
         const {value} = this.props;
+        const {iconSet} = this;
 
-        return value && value.pool ? value.pool : this.fieldPoolKey;
-    }
-
-    loadPreviewNames() {
-        const pool = iconPoolStore.getPool(this.previewPoolKey);
-
-        if (pool) {
-            iconPoolStore.loadNames(pool.key).catch(() => {});
+        if (!value || !iconSet) {
+            this.setState({content: undefined});
+            return;
         }
+
+        this.setState({loading: true});
+        iconContentStore.load(iconSet, value).then((content) => {
+            this.setState({content, loading: false});
+        });
     }
 
     openOverlay = () => {
-        if (this.props.disabled || !iconPoolStore.getPool(this.fieldPoolKey)) {
+        if (this.props.disabled || !this.iconSet) {
             return;
         }
 
@@ -68,18 +83,6 @@ class IconSelection extends React.Component<FieldTypeProps<?Value>, State> {
         this.setState({overlayOpen: false});
     };
 
-    handleConfirm = (name: string) => {
-        const {onChange, onFinish} = this.props;
-        const pool = iconPoolStore.getPool(this.fieldPoolKey);
-
-        if (pool) {
-            onChange({pool: pool.key, name});
-            onFinish();
-        }
-
-        this.closeOverlay();
-    };
-
     handleRemove = () => {
         const {onChange, onFinish} = this.props;
 
@@ -87,65 +90,58 @@ class IconSelection extends React.Component<FieldTypeProps<?Value>, State> {
         onFinish();
     };
 
-    getProblem(previewPool: ?IconPool, name: ?string): ?string {
-        const fieldPoolKey = this.fieldPoolKey;
+    handleOverlayConfirm = (item: {id: string}) => {
+        const {onChange, onFinish} = this.props;
 
-        if (!iconPoolStore.getPool(fieldPoolKey)) {
-            return translate('sulu_icon_picker.unknown_pool', {pool: fieldPoolKey || ''});
-        }
-
-        if (!name) {
-            return undefined;
-        }
-
-        if (!previewPool) {
-            return translate('sulu_icon_picker.unknown_pool', {pool: this.previewPoolKey || ''});
-        }
-
-        const names = iconPoolStore.getNames(previewPool.key);
-        if (names && !names.includes(name)) {
-            return translate('sulu_icon_picker.unknown_icon', {name});
-        }
-
-        return undefined;
-    }
+        onChange(item.id);
+        onFinish();
+        this.closeOverlay();
+    };
 
     render() {
         const {disabled, error, value} = this.props;
-        const name = value && value.name ? value.name : undefined;
-        const previewPool = iconPoolStore.getPool(this.previewPoolKey);
-        const fieldPool = iconPoolStore.getPool(this.fieldPoolKey);
-        const problem = this.getProblem(previewPool, name);
+        const {iconSet} = this;
+        const {content, loading, overlayOpen} = this.state;
 
         return (
             <React.Fragment>
                 <SingleItemSelection
                     disabled={!!disabled}
-                    emptyText={translate('sulu_icon_picker.select')}
+                    emptyText={translate('sulu_admin.single_icon_selection.select')}
                     leftButton={{
                         icon: 'su-th-large',
                         onClick: this.openOverlay,
                     }}
-                    onRemove={name ? this.handleRemove : undefined}
-                    valid={!error && !problem}
+                    onRemove={value ? this.handleRemove : undefined}
+                    valid={!error}
                 >
-                    {name &&
+                    {value &&
                         <div className={styles.iconItem}>
-                            {previewPool
-                                ? <IconSvg className={styles.icon} name={name} pool={previewPool} />
-                                : <Icon className={styles.icon} name="su-exclamation-triangle" />
+                            {content &&
+                                <span className={styles.icon} dangerouslySetInnerHTML={{__html: content}} />
                             }
-                            <div className={problem ? styles.problem : styles.name}>{problem || name}</div>
+                            {!content && loading &&
+                                <Icon className={styles.icon} name="su-process" />
+                            }
+                            {!content && !loading &&
+                                <Icon className={styles.icon} name="su-exclamation-triangle" />
+                            }
+                            <div className={styles.name}>{value}</div>
                         </div>
                     }
                 </SingleItemSelection>
-                {fieldPool &&
-                    <IconSelectionOverlay
+                {iconSet &&
+                    <SingleListOverlay
+                        adapter="icon"
+                        listKey="icons"
+                        locale={this.locale}
                         onClose={this.closeOverlay}
-                        onConfirm={this.handleConfirm}
-                        open={this.state.overlayOpen}
-                        pool={fieldPool}
-                        value={value && value.pool === fieldPool.key ? name : undefined}
+                        onConfirm={this.handleOverlayConfirm}
+                        open={overlayOpen}
+                        options={{'icon_set': iconSet}}
+                        preSelectedItem={value ? {'id': value} : undefined}
+                        resourceKey="icons"
+                        title={translate('sulu_admin.single_icon_selection.select')}
                     />
                 }
             </React.Fragment>

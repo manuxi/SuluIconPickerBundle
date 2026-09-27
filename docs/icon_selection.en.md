@@ -1,113 +1,107 @@
 # Icon Selection
 
-A form field type that lets editors pick an icon from an SVG icon set. It looks and behaves like Sulu's own
-`single_media_selection`: a compact row with the icon and its name, a button on the left to open the picker, and
-a trash icon on the right to clear the selection. The picker itself is an overlay with a search field and a grid
-of all icons of the set. The frontend renders the stored icon with the Twig function `sulu_icon()` — no icon
-font needed.
+Sulu 3.0 already ships its own `single_icon_selection` field type: editors pick an icon from a configured
+`icon_set` (an `svg://` folder of individual SVG files, or an `icomoon://` icon font selection.json) in a search
+overlay. It has two gaps: the form field itself shows only the stored icon **name** as plain text (no visual
+preview), and there is no Twig function or property resolver to render the icon on the frontend.
 
-> Not to be confused with Sulu core's own `single_icon_selection` field type (an icon-font picker backed by a
-> configured `icon_set`). This field is a separate type, `icon_selection`, for the SVG sprite pools below.
-
-Currently shipped icon set (pool): **Bootstrap Icons** (`bootstrap-icons`, MIT).
+This bundle fixes both **without duplicating any of Sulu's own icon handling** - no sprite build, no separate
+storage format, no new field-type name. It overrides Sulu core's own `single_icon_selection` field component and
+`icon` list adapter in place (see "How the override works" below) and adds the missing Twig/PropertyResolver
+side, reusing Sulu's own `icon_sets` config and `IconProviderInterface` services.
 
 ---
 
+## Setup: register an icon set (Sulu core config, not this bundle)
+
+```yaml
+# config/packages/sulu_admin.yaml
+sulu_admin:
+    icon_sets:
+        bootstrap-icons: 'svg://%kernel.project_dir%/var/icon-sets/bootstrap-icons'
+```
+
+The folder holds one `.svg` file per icon, e.g. from the `bootstrap-icons` npm package's `icons/` directory
+(copy the files you want to ship, `id` = filename without `.svg`). See [Sulu's icon set
+docs](https://docs.sulu.io/en/latest/book/fields.html#single_icon_selection) for the full config format
+(`icomoon://` is supported the same way).
+
 ## Usage in Form XML
 
+Exactly Sulu core's own syntax - nothing this bundle adds:
+
 ```xml
-<property name="icon" type="icon_selection">
+<property name="icon" type="single_icon_selection">
     <meta>
         <title lang="en">Icon</title>
         <title lang="de">Icon</title>
     </meta>
     <params>
-        <!-- optional: icon set used for new selections, default: first registered pool ("bootstrap-icons") -->
-        <param name="pool" value="bootstrap-icons"/>
+        <param name="icon_set" value="bootstrap-icons"/>
     </params>
 </property>
 ```
 
 ## Storage format
 
-`{"pool": "bootstrap-icons", "name": "calendar-heart"}` — pool and icon name as strings. Keeping the pool in the
-value lets several icon sets coexist; switching the field's `pool` param later does not break existing content.
+A plain string, the icon's id (e.g. `"calendar-heart"`) - identical to core, so this bundle is a drop-in
+enhancement of an existing `single_icon_selection` field, not a migration.
 
-## Behaviour
+## Form field
 
-- The row shows the selected icon itself (rendered from the sprite) next to its name, like a media selection row.
-- The button on the left opens the overlay. The search filters by name while typing; several words must all
-  match (`house door` → `house-door`, `house-door-fill`).
-- Click selects a tile, **Confirm** takes it over. Double-click takes it over directly.
-- The trash icon on the right clears the selection.
-- Visible errors instead of a silently empty row:
-  - the icon no longer exists in its set (e.g. renamed in a Bootstrap Icons update),
-  - the stored or configured set is not registered.
+A compact row (icon + name, like Sulu's own `single_media_selection`): a button on the left opens the picker
+overlay, the trash icon on the right clears the selection. The preview icon is fetched once from Sulu's own
+`GET /admin/api/icons` endpoint (the same one the overlay uses) and cached.
+
+## Picker overlay
+
+Same overlay, same search/pagination/REST loading as Sulu core - only the icon tiles are replaced with a fixed
+grid (Sulu core's own tiles wrap onto a variable-height flex row, which looks ragged with a few thousand icons).
 
 ## Twig
-
-The property resolver returns `{pool, name}` — or `null` if the value is empty or the icon no longer exists.
 
 ```twig
 {{ sulu_icon(content.icon) }}
 {{ sulu_icon(content.icon, {class: 'text-primary', size: 32, title: 'Events'}) }}
 
 {# hard-coded icons, e.g. replacing old <i class="bi bi-calendar"></i> #}
-{{ sulu_icon('calendar') }}                        {# default pool #}
-{{ sulu_icon('bootstrap-icons:calendar-heart') }}  {# explicit pool #}
+{{ sulu_icon('calendar-heart', {icon_set: 'bootstrap-icons'}) }}
+{{ sulu_icon('bootstrap-icons:calendar-heart') }}
 
 {% if content.icon %}…{% endif %}                  {# fallback when nothing is set #}
 ```
 
-Output:
+The property resolver returns `{name, icon_set}` (or `null` if empty or the icon no longer exists in its set) -
+`content.icon` in the examples above is that resolved value, not the raw stored string.
+
+Output: the icon's own SVG markup, with `width`/`height`/`fill`/`class` overridden and its original `viewBox`
+kept, e.g.:
 
 ```html
-<svg class="sulu-icon sulu-icon--bootstrap-icons text-primary" width="1em" height="1em" fill="currentColor"
-     aria-hidden="true" focusable="false">
-    <use href="/bundles/suluiconpicker/icon-picker/bootstrap-icons/sprite.svg#bootstrap-icons-calendar-heart"></use>
+<svg class="sulu-icon sulu-icon--bootstrap-icons text-primary" width="32" height="32" viewBox="0 0 16 16"
+     fill="currentColor" role="img" aria-label="Events">
+    <path d="..."/>
 </svg>
 ```
 
-| Option  | Default | Meaning                                                                   |
-|---------|---------|---------------------------------------------------------------------------|
-| `class` | –       | Additional CSS classes                                                    |
-| `size`  | `1em`   | `width`/`height` attributes; CSS `width`/`height` override them           |
-| `title` | –       | Accessible label (`role="img"`); without it the icon is `aria-hidden`    |
+| Option     | Default | Meaning                                                                 |
+|------------|---------|--------------------------------------------------------------------------|
+| `class`    | –       | Additional CSS classes                                                   |
+| `size`     | `1em`   | `width`/`height` attributes; CSS `width`/`height` override them          |
+| `title`    | –       | Accessible label (`role="img"`); without it the icon is `aria-hidden`   |
+| `icon_set` | –       | Only for a plain string value without a `pool:` prefix (hard-coded icons) |
 
-Color follows `currentColor`. For icons aligned with text like the Bootstrap Icons font:
+Color follows `currentColor`. An unknown icon renders nothing; with `kernel.debug` enabled it throws instead, so
+typos in templates show up.
 
-```css
-.sulu-icon { vertical-align: -0.125em; }
-```
+## How the override works
 
-An unknown icon renders nothing; with `kernel.debug` enabled it throws instead, so typos in templates show up.
-
-## How the icons are delivered
-
-Per pool, one SVG sprite (`<symbol id="<pool>-<name>">`) and one `names.json` live under
-`src/Resources/public/icon-picker/<pool>/` and are published by `assets:install` to
-`public/bundles/suluiconpicker/`. The sprite of Bootstrap Icons is about 1.1 MB (≈ 220 KB gzip) and is loaded
-once and cached by the browser.
-
-The admin gets the pool list (key, sprite URL, names URL) through the regular Sulu admin config
-(`sulu_icon_picker`); the names are fetched on demand. No extra routes are needed.
-
-## Rebuilding the sprite
-
-The generated files are committed. To update Bootstrap Icons, raise the version in `package.json`, then in the
-bundle:
-
-```bash
-npm install
-npm run build-icons
-```
-
-## Adding another pool
-
-1. Implement `Manuxi\SuluIconPickerBundle\Pool\IconPoolInterface` (or extend `AbstractSpriteIconPool`) and register
-   the class as a service. With autoconfiguration it is tagged `sulu_icon_picker.pool` automatically.
-2. Provide a sprite with symbol ids `<pool>-<name>` and a `names.json` (array of names). Inside this bundle, add
-   the pool to `POOLS` in `scripts/build-icon-sprite.js`.
+Sulu core registers `single_icon_selection` (form field) and `icon` (list adapter) itself, in its own
+`sulu_admin` update-config-hook, before this bundle's hook runs - `fieldRegistry.add()`/`listAdapterRegistry.add()`
+throw on an already-used key, so `src/Resources/js/index.js` writes into the registries' internal `fields`/
+`adapters` maps directly, replacing core's components with this bundle's after core has already registered them.
+No template XML change and no new field-type name - existing `single_icon_selection` fields keep working, they
+just render better.
 
 ## Installation
 
