@@ -1,10 +1,14 @@
-# Single Icon Selection
+# Icon Selection
 
 Ein Formularfeld, mit dem Redakteure ein Icon aus einem SVG-Icon-Set auswählen. Es sieht aus und verhält sich wie
 Sulus eigenes `single_media_selection`: eine kompakte Zeile mit Icon und Namen, links ein Button zum Öffnen der
 Auswahl, rechts ein Papierkorb zum Entfernen. Die Auswahl selbst läuft über ein Overlay mit Suchfeld und einem
 Raster aller Icons des Sets. Im Frontend gibt die Twig-Funktion `sulu_icon()` das gespeicherte Icon aus — ganz
 ohne Icon-Font.
+
+> Nicht zu verwechseln mit Sulus eigenem Feldtyp `single_icon_selection` (ein Icon-Font-Picker, der ein
+> konfiguriertes `icon_set` braucht). Dieses Feld ist ein eigener Typ, `icon_selection`, für die SVG-Sprite-Pools
+> unten.
 
 Aktuell enthaltenes Icon-Set (Pool): **Bootstrap Icons** (`bootstrap-icons`, MIT).
 
@@ -13,7 +17,7 @@ Aktuell enthaltenes Icon-Set (Pool): **Bootstrap Icons** (`bootstrap-icons`, MIT
 ## Verwendung im Formular-XML
 
 ```xml
-<property name="icon" type="single_icon_selection">
+<property name="icon" type="icon_selection">
     <meta>
         <title lang="de">Icon</title>
         <title lang="en">Icon</title>

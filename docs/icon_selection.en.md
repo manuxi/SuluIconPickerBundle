@@ -1,10 +1,13 @@
-# Single Icon Selection
+# Icon Selection
 
 A form field type that lets editors pick an icon from an SVG icon set. It looks and behaves like Sulu's own
 `single_media_selection`: a compact row with the icon and its name, a button on the left to open the picker, and
 a trash icon on the right to clear the selection. The picker itself is an overlay with a search field and a grid
 of all icons of the set. The frontend renders the stored icon with the Twig function `sulu_icon()` — no icon
 font needed.
+
+> Not to be confused with Sulu core's own `single_icon_selection` field type (an icon-font picker backed by a
+> configured `icon_set`). This field is a separate type, `icon_selection`, for the SVG sprite pools below.
 
 Currently shipped icon set (pool): **Bootstrap Icons** (`bootstrap-icons`, MIT).
 
@@ -13,7 +16,7 @@ Currently shipped icon set (pool): **Bootstrap Icons** (`bootstrap-icons`, MIT).
 ## Usage in Form XML
 
 ```xml
-<property name="icon" type="single_icon_selection">
+<property name="icon" type="icon_selection">
     <meta>
         <title lang="en">Icon</title>
         <title lang="de">Icon</title>

@@ -1,7 +1,7 @@
 // @flow
 import {initializer} from 'sulu-admin-bundle/services';
 import fieldRegistry from 'sulu-admin-bundle/containers/Form/registries/fieldRegistry';
-import SingleIconSelection from './containers/Form/fields/SingleIconSelection';
+import IconSelection from './containers/Form/fields/IconSelection';
 import IconSelectionOverlay from './containers/IconSelectionOverlay';
 import IconSvg from './components/IconSvg';
 import iconPoolStore from './stores/iconPoolStore';
@@ -13,11 +13,11 @@ initializer.addUpdateConfigHook('sulu_icon_picker', (config, initialized) => {
         return;
     }
 
-    fieldRegistry.add('single_icon_selection', SingleIconSelection);
+    fieldRegistry.add('icon_selection', IconSelection);
 });
 
 export {
-    SingleIconSelection,
+    IconSelection,
     IconSelectionOverlay,
     IconSvg,
     iconPoolStore,

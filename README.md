@@ -13,8 +13,8 @@ it as inline SVG via Twig. Icons come from SVG sprites — no icon font, no thou
 
 ## Features & Documentation
 
-*   **[Single Icon Selection](docs/single_icon_selection.en.md)** - Field type `single_icon_selection`, styled
-    like `single_media_selection`, with a picker overlay, Twig function `sulu_icon()`, extensible icon pools
+*   **[Icon Selection](docs/icon_selection.en.md)** - Field type `icon_selection`, styled like
+    `single_media_selection`, with a picker overlay, Twig function `sulu_icon()`, extensible icon pools
     (shipped: Bootstrap Icons)
 
 ---

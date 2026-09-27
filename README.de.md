@@ -14,7 +14,7 @@ Einzeldateien.
 
 ## Funktionen & Dokumentation
 
-*   **[Single Icon Selection](docs/single_icon_selection.de.md)** - Feldtyp `single_icon_selection`, gestaltet wie
+*   **[Icon Selection](docs/icon_selection.de.md)** - Feldtyp `icon_selection`, gestaltet wie
     `single_media_selection`, mit Auswahl-Overlay, Twig-Funktion `sulu_icon()`, erweiterbare Icon-Pools
     (enthalten: Bootstrap Icons)
 

@@ -9,7 +9,7 @@ import IconSvg from '../../../components/IconSvg';
 import IconSelectionOverlay from '../../IconSelectionOverlay';
 import iconPoolStore from '../../../stores/iconPoolStore';
 import type {IconPool} from '../../../stores/iconPoolStore';
-import styles from './singleIconSelection.scss';
+import styles from './iconSelection.scss';
 
 type Value = {
     name: string,
@@ -21,7 +21,7 @@ type State = {
 };
 
 @observer
-class SingleIconSelection extends React.Component<FieldTypeProps<?Value>, State> {
+class IconSelection extends React.Component<FieldTypeProps<?Value>, State> {
     state = {
         overlayOpen: false,
     };
@@ -153,4 +153,4 @@ class SingleIconSelection extends React.Component<FieldTypeProps<?Value>, State>
     }
 }
 
-export default SingleIconSelection;
+export default IconSelection;

@@ -24,7 +24,7 @@ jest.mock('sulu-admin-bundle/components', () => ({
     },
 }));
 
-import SingleIconSelection from '../../../../../src/Resources/js/containers/Form/fields/SingleIconSelection';
+import IconSelection from '../../../../../src/Resources/js/containers/Form/fields/IconSelection';
 import iconPoolStore from '../../../../../src/Resources/js/stores/iconPoolStore';
 
 const SPRITE = '/bundles/suluiconpicker/icon-picker/bootstrap-icons/sprite.svg';
@@ -49,10 +49,10 @@ beforeEach(() => {
     }));
 });
 
-describe('SingleIconSelection', () => {
+describe('IconSelection', () => {
     test('renders the selected icon from the sprite, like single_media_selection', () => {
         const {container} = render(
-            <SingleIconSelection {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'calendar-heart'}} />
+            <IconSelection {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'calendar-heart'}} />
         );
 
         expect(container.querySelector('use').getAttribute('href')).toBe(`${SPRITE}#bootstrap-icons-calendar-heart`);
@@ -62,19 +62,19 @@ describe('SingleIconSelection', () => {
     });
 
     test('renders the empty text without value', () => {
-        render(<SingleIconSelection {...fieldTypeDefaultProps} />);
+        render(<IconSelection {...fieldTypeDefaultProps} />);
 
         expect(screen.getByText('sulu_icon_picker.select')).toBeInTheDocument();
     });
 
     test('shows an error for an unknown icon', async() => {
-        render(<SingleIconSelection {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'gone'}} />);
+        render(<IconSelection {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'gone'}} />);
 
         expect(await screen.findByText('sulu_icon_picker.unknown_icon')).toBeInTheDocument();
     });
 
     test('shows an error for an unknown pool', () => {
-        render(<SingleIconSelection {...fieldTypeDefaultProps} value={{pool: 'tabler', name: 'house'}} />);
+        render(<IconSelection {...fieldTypeDefaultProps} value={{pool: 'tabler', name: 'house'}} />);
 
         expect(screen.getByText('sulu_icon_picker.unknown_pool')).toBeInTheDocument();
     });
@@ -84,7 +84,7 @@ describe('SingleIconSelection', () => {
         const onFinish = jest.fn();
 
         const {container} = render(
-            <SingleIconSelection
+            <IconSelection
                 {...fieldTypeDefaultProps}
                 onChange={onChange}
                 onFinish={onFinish}
@@ -101,7 +101,7 @@ describe('SingleIconSelection', () => {
     test('selects an icon in the overlay', async() => {
         const onChange = jest.fn();
 
-        const {container} = render(<SingleIconSelection {...fieldTypeDefaultProps} onChange={onChange} />);
+        const {container} = render(<IconSelection {...fieldTypeDefaultProps} onChange={onChange} />);
 
         // the real button, not the item container's role="button" div (Sulu's own SingleItemSelection markup)
         fireEvent.click(container.querySelector('button'));
