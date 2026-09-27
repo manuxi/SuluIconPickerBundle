@@ -1,0 +1,20 @@
+{
+    "name": "@manuxi/sulu-icon-picker-bundle",
+    "version": "1.0.0",
+    "description": "Icon picker field type for Sulu CMS",
+    "main": "js/index.js",
+    "keywords": [
+        "sulu",
+        "admin",
+        "content-type",
+        "icon-picker"
+    ],
+    "author": "Manuxi",
+    "license": "MIT",
+    "peerDependencies": {
+        "sulu-admin-bundle": "^2.6.0",
+        "react": "^17.0.0 || ^18.0.0",
+        "mobx": "^4.0.0 || ^6.0.0",
+        "mobx-react": "^5.0.0 || ^7.0.0 || ^9.0.0"
+    }
+}

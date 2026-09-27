@@ -1,0 +1,10 @@
+sulu_icon_picker:
+    select: "Icon wählen"
+    overlay_title: "Icon wählen"
+    search: "Icons durchsuchen"
+    count: "{count} Icons"
+    no_results: "Keine Icons gefunden."
+    load_error: "Icons konnten nicht geladen werden."
+    unknown_pool: "Icon-Set \"{pool}\" ist nicht verfügbar."
+    unknown_icon: "Icon \"{name}\" existiert nicht mehr."
+    remove: "Icon entfernen"

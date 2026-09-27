@@ -1,0 +1,37 @@
+{
+    "name": "@manuxi/sulu-icon-picker-bundle",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Icon picker field type for Sulu CMS",
+    "license": "MIT",
+    "scripts": {
+        "build-icons": "node scripts/build-icon-sprite.js",
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage"
+    },
+    "dependencies": {
+        "sulu-admin-bundle": "file:vendor/sulu/sulu/src/Sulu/Bundle/AdminBundle/Resources/js",
+        "classnames": "^2.3.0"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.5.5",
+        "@babel/plugin-proposal-decorators": "^7.4.4",
+        "@babel/plugin-transform-class-properties": "^7.22.0",
+        "@babel/plugin-transform-flow-strip-types": "^7.4.4",
+        "@babel/preset-env": "^7.5.5",
+        "@babel/preset-react": "^7.0.0",
+        "@testing-library/jest-dom": "^5.17.0",
+        "@testing-library/react": "^12.1.5",
+        "babel-jest": "^26.6.3",
+        "bootstrap-icons": "^1.13.1",
+        "core-js": "^3.18.0",
+        "identity-obj-proxy": "^3.0.0",
+        "jest": "^26.6.3",
+        "mobx": "^6.0.0",
+        "mobx-react": "^7.0.0",
+        "react": "^17.0.0",
+        "react-dom": "^17.0.0",
+        "regenerator-runtime": "^0.14.0"
+    }
+}
