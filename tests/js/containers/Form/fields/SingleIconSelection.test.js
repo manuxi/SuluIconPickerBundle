@@ -24,7 +24,7 @@ jest.mock('sulu-admin-bundle/components', () => ({
     },
 }));
 
-import IconPicker from '../../../../../src/Resources/js/containers/Form/fields/IconPicker';
+import SingleIconSelection from '../../../../../src/Resources/js/containers/Form/fields/SingleIconSelection';
 import iconPoolStore from '../../../../../src/Resources/js/stores/iconPoolStore';
 
 const SPRITE = '/bundles/suluiconpicker/icon-picker/bootstrap-icons/sprite.svg';
@@ -49,30 +49,32 @@ beforeEach(() => {
     }));
 });
 
-describe('IconPicker', () => {
-    test('renders the selected icon from the sprite', () => {
+describe('SingleIconSelection', () => {
+    test('renders the selected icon from the sprite, like single_media_selection', () => {
         const {container} = render(
-            <IconPicker {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'calendar-heart'}} />
+            <SingleIconSelection {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'calendar-heart'}} />
         );
 
         expect(container.querySelector('use').getAttribute('href')).toBe(`${SPRITE}#bootstrap-icons-calendar-heart`);
         expect(screen.getByText('calendar-heart')).toBeInTheDocument();
+        // exactly two buttons: the left "open picker" button and the remove button, as in single_media_selection
+        expect(container.querySelectorAll('button')).toHaveLength(2);
     });
 
-    test('renders a placeholder without value', () => {
-        render(<IconPicker {...fieldTypeDefaultProps} />);
+    test('renders the empty text without value', () => {
+        render(<SingleIconSelection {...fieldTypeDefaultProps} />);
 
         expect(screen.getByText('sulu_icon_picker.select')).toBeInTheDocument();
     });
 
     test('shows an error for an unknown icon', async() => {
-        render(<IconPicker {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'gone'}} />);
+        render(<SingleIconSelection {...fieldTypeDefaultProps} value={{pool: 'bootstrap-icons', name: 'gone'}} />);
 
         expect(await screen.findByText('sulu_icon_picker.unknown_icon')).toBeInTheDocument();
     });
 
     test('shows an error for an unknown pool', () => {
-        render(<IconPicker {...fieldTypeDefaultProps} value={{pool: 'tabler', name: 'house'}} />);
+        render(<SingleIconSelection {...fieldTypeDefaultProps} value={{pool: 'tabler', name: 'house'}} />);
 
         expect(screen.getByText('sulu_icon_picker.unknown_pool')).toBeInTheDocument();
     });
@@ -81,8 +83,8 @@ describe('IconPicker', () => {
         const onChange = jest.fn();
         const onFinish = jest.fn();
 
-        render(
-            <IconPicker
+        const {container} = render(
+            <SingleIconSelection
                 {...fieldTypeDefaultProps}
                 onChange={onChange}
                 onFinish={onFinish}
@@ -90,7 +92,7 @@ describe('IconPicker', () => {
             />
         );
 
-        fireEvent.click(screen.getByLabelText('sulu_icon_picker.remove'));
+        fireEvent.click(container.querySelectorAll('button')[1]);
 
         expect(onChange).toHaveBeenCalledWith(undefined);
         expect(onFinish).toHaveBeenCalled();
@@ -99,9 +101,10 @@ describe('IconPicker', () => {
     test('selects an icon in the overlay', async() => {
         const onChange = jest.fn();
 
-        render(<IconPicker {...fieldTypeDefaultProps} onChange={onChange} />);
+        const {container} = render(<SingleIconSelection {...fieldTypeDefaultProps} onChange={onChange} />);
 
-        fireEvent.click(screen.getByRole('button', {name: /sulu_icon_picker.select/}));
+        // the real button, not the item container's role="button" div (Sulu's own SingleItemSelection markup)
+        fireEvent.click(container.querySelector('button'));
         fireEvent.change(screen.getByPlaceholderText('sulu_icon_picker.search'), {target: {value: 'door'}});
 
         const tile = await screen.findByTitle('house-door');

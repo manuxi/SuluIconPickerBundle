@@ -21,7 +21,7 @@ services:
         tags:
             - { name: 'sulu.admin' }
 
-    Manuxi\SuluIconPickerBundle\Content\Type\IconPickerPropertyResolver:
+    Manuxi\SuluIconPickerBundle\Content\Type\SingleIconSelectionPropertyResolver:
         tags:
             - { name: 'sulu_content.property_resolver' }
 

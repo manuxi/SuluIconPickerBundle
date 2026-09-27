@@ -7,4 +7,3 @@ sulu_icon_picker:
     load_error: "Icons could not be loaded."
     unknown_pool: "Icon set \"{pool}\" is not available."
     unknown_icon: "Icon \"{name}\" no longer exists."
-    remove: "Remove icon"

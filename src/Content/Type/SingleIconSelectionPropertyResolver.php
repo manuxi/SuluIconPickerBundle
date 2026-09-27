@@ -8,7 +8,7 @@ use Manuxi\SuluIconPickerBundle\Pool\IconPoolRegistry;
 use Sulu\Content\Application\ContentResolver\Value\ContentView;
 use Sulu\Content\Application\PropertyResolver\Resolver\PropertyResolverInterface;
 
-final class IconPickerPropertyResolver implements PropertyResolverInterface
+final class SingleIconSelectionPropertyResolver implements PropertyResolverInterface
 {
     public function __construct(
         private readonly IconPoolRegistry $registry,
@@ -26,6 +26,6 @@ final class IconPickerPropertyResolver implements PropertyResolverInterface
 
     public static function getType(): string
     {
-        return 'icon_picker';
+        return 'single_icon_selection';
     }
 }

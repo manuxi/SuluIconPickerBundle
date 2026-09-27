@@ -2,13 +2,14 @@
 import React from 'react';
 import {observer} from 'mobx-react';
 import {Icon} from 'sulu-admin-bundle/components';
+import SingleItemSelection from 'sulu-admin-bundle/components/SingleItemSelection';
 import {translate} from 'sulu-admin-bundle/utils/Translator';
 import type {FieldTypeProps} from 'sulu-admin-bundle/types';
 import IconSvg from '../../../components/IconSvg';
 import IconSelectionOverlay from '../../IconSelectionOverlay';
 import iconPoolStore from '../../../stores/iconPoolStore';
 import type {IconPool} from '../../../stores/iconPoolStore';
-import styles from './iconPicker.scss';
+import styles from './singleIconSelection.scss';
 
 type Value = {
     name: string,
@@ -20,7 +21,7 @@ type State = {
 };
 
 @observer
-class IconPicker extends React.Component<FieldTypeProps<?Value>, State> {
+class SingleIconSelection extends React.Component<FieldTypeProps<?Value>, State> {
     state = {
         overlayOpen: false,
     };
@@ -67,13 +68,6 @@ class IconPicker extends React.Component<FieldTypeProps<?Value>, State> {
         this.setState({overlayOpen: false});
     };
 
-    handleKeyDown = (event: SyntheticKeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            this.openOverlay();
-        }
-    };
-
     handleConfirm = (name: string) => {
         const {onChange, onFinish} = this.props;
         const pool = iconPoolStore.getPool(this.fieldPoolKey);
@@ -86,10 +80,9 @@ class IconPicker extends React.Component<FieldTypeProps<?Value>, State> {
         this.closeOverlay();
     };
 
-    handleRemove = (event: SyntheticEvent<HTMLButtonElement>) => {
+    handleRemove = () => {
         const {onChange, onFinish} = this.props;
 
-        event.stopPropagation();
         onChange(undefined);
         onFinish();
     };
@@ -119,67 +112,45 @@ class IconPicker extends React.Component<FieldTypeProps<?Value>, State> {
 
     render() {
         const {disabled, error, value} = this.props;
-        const {overlayOpen} = this.state;
         const name = value && value.name ? value.name : undefined;
         const previewPool = iconPoolStore.getPool(this.previewPoolKey);
         const fieldPool = iconPoolStore.getPool(this.fieldPoolKey);
         const problem = this.getProblem(previewPool, name);
 
-        const previewClass = [
-            styles.preview,
-            name ? styles.filled : styles.empty,
-            error || problem ? styles.error : '',
-            disabled ? styles.disabled : '',
-        ].join(' ').trim();
-
         return (
-            <div className={styles.container}>
-                <div
-                    className={previewClass}
-                    onClick={this.openOverlay}
-                    onKeyDown={this.handleKeyDown}
-                    role="button"
-                    tabIndex={disabled ? -1 : 0}
-                    title={name || translate('sulu_icon_picker.select')}
+            <React.Fragment>
+                <SingleItemSelection
+                    disabled={!!disabled}
+                    emptyText={translate('sulu_icon_picker.select')}
+                    leftButton={{
+                        icon: 'su-th-large',
+                        onClick: this.openOverlay,
+                    }}
+                    onRemove={name ? this.handleRemove : undefined}
+                    valid={!error && !problem}
                 >
-                    {name && previewPool &&
-                        <IconSvg className={styles.icon} name={name} pool={previewPool} />
-                    }
-                    {!name &&
-                        <div className={styles.placeholder}>
-                            <Icon name="su-plus" />
-                            <span>{translate('sulu_icon_picker.select')}</span>
+                    {name &&
+                        <div className={styles.iconItem}>
+                            {previewPool
+                                ? <IconSvg className={styles.icon} name={name} pool={previewPool} />
+                                : <Icon className={styles.icon} name="su-exclamation-triangle" />
+                            }
+                            <div className={problem ? styles.problem : styles.name}>{problem || name}</div>
                         </div>
                     }
-                    {name && !disabled &&
-                        <button
-                            aria-label={translate('sulu_icon_picker.remove')}
-                            className={styles.remove}
-                            onClick={this.handleRemove}
-                            type="button"
-                        >
-                            <Icon name="su-trash-alt" />
-                        </button>
-                    }
-                </div>
-                {name && !problem &&
-                    <div className={styles.caption}>{name}</div>
-                }
-                {problem &&
-                    <div className={styles.problem}>{problem}</div>
-                }
+                </SingleItemSelection>
                 {fieldPool &&
                     <IconSelectionOverlay
                         onClose={this.closeOverlay}
                         onConfirm={this.handleConfirm}
-                        open={overlayOpen}
+                        open={this.state.overlayOpen}
                         pool={fieldPool}
                         value={value && value.pool === fieldPool.key ? name : undefined}
                     />
                 }
-            </div>
+            </React.Fragment>
         );
     }
 }
 
-export default IconPicker;
+export default SingleIconSelection;

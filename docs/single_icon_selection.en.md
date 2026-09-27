@@ -1,8 +1,10 @@
-# Icon Picker
+# Single Icon Selection
 
-A form field type that lets editors pick an icon from an SVG icon set. The field shows the selected icon as a
-large 100×100px preview; clicking it opens an overlay with a search field and a grid of all icons of the set.
-The frontend renders the stored icon with the Twig function `sulu_icon()` — no icon font needed.
+A form field type that lets editors pick an icon from an SVG icon set. It looks and behaves like Sulu's own
+`single_media_selection`: a compact row with the icon and its name, a button on the left to open the picker, and
+a trash icon on the right to clear the selection. The picker itself is an overlay with a search field and a grid
+of all icons of the set. The frontend renders the stored icon with the Twig function `sulu_icon()` — no icon
+font needed.
 
 Currently shipped icon set (pool): **Bootstrap Icons** (`bootstrap-icons`, MIT).
 
@@ -11,7 +13,7 @@ Currently shipped icon set (pool): **Bootstrap Icons** (`bootstrap-icons`, MIT).
 ## Usage in Form XML
 
 ```xml
-<property name="icon" type="icon_picker">
+<property name="icon" type="single_icon_selection">
     <meta>
         <title lang="en">Icon</title>
         <title lang="de">Icon</title>
@@ -30,12 +32,12 @@ value lets several icon sets coexist; switching the field's `pool` param later d
 
 ## Behaviour
 
-- Preview shows the selected icon itself (rendered from the sprite), plus its name below.
-- Click or <kbd>Enter</kbd> on the preview opens the overlay. The search filters by name while typing; several
-  words must all match (`house door` → `house-door`, `house-door-fill`).
+- The row shows the selected icon itself (rendered from the sprite) next to its name, like a media selection row.
+- The button on the left opens the overlay. The search filters by name while typing; several words must all
+  match (`house door` → `house-door`, `house-door-fill`).
 - Click selects a tile, **Confirm** takes it over. Double-click takes it over directly.
-- The trash icon in the corner clears the selection.
-- Visible errors instead of an empty preview:
+- The trash icon on the right clears the selection.
+- Visible errors instead of a silently empty row:
   - the icon no longer exists in its set (e.g. renamed in a Bootstrap Icons update),
   - the stored or configured set is not registered.
 

@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace Manuxi\SuluIconPickerBundle\Tests\Unit\Content\Type;
 
-use Manuxi\SuluIconPickerBundle\Content\Type\IconPickerPropertyResolver;
+use Manuxi\SuluIconPickerBundle\Content\Type\SingleIconSelectionPropertyResolver;
 use Manuxi\SuluIconPickerBundle\Pool\BootstrapIconsPool;
 use Manuxi\SuluIconPickerBundle\Pool\IconPoolRegistry;
 use PHPUnit\Framework\TestCase;
 
-class IconPickerPropertyResolverTest extends TestCase
+class SingleIconSelectionPropertyResolverTest extends TestCase
 {
-    private IconPickerPropertyResolver $resolver;
+    private SingleIconSelectionPropertyResolver $resolver;
 
     protected function setUp(): void
     {
-        $this->resolver = new IconPickerPropertyResolver(new IconPoolRegistry([new BootstrapIconsPool()]));
+        $this->resolver = new SingleIconSelectionPropertyResolver(new IconPoolRegistry([new BootstrapIconsPool()]));
     }
 
     public function testType(): void
     {
-        $this->assertSame('icon_picker', IconPickerPropertyResolver::getType());
+        $this->assertSame('single_icon_selection', SingleIconSelectionPropertyResolver::getType());
     }
 
     public function testResolvesStoredValue(): void

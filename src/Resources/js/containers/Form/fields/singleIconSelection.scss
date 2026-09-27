@@ -1,0 +1,28 @@
+.iconItem {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    overflow: hidden;
+}
+
+.icon {
+    display: block;
+    flex-shrink: 0;
+    width: 19px;
+    height: 19px;
+}
+
+.name {
+    margin-left: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.problem {
+    margin-left: 10px;
+    overflow: hidden;
+    color: #ee3939;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

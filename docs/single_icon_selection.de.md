@@ -1,8 +1,10 @@
-# Icon Picker
+# Single Icon Selection
 
-Ein Formularfeld, mit dem Redakteure ein Icon aus einem SVG-Icon-Set auswählen. Das Feld zeigt das gewählte Icon
-als große 100×100px-Vorschau; ein Klick darauf öffnet ein Overlay mit Suchfeld und einem Raster aller Icons des
-Sets. Im Frontend gibt die Twig-Funktion `sulu_icon()` das gespeicherte Icon aus — ganz ohne Icon-Font.
+Ein Formularfeld, mit dem Redakteure ein Icon aus einem SVG-Icon-Set auswählen. Es sieht aus und verhält sich wie
+Sulus eigenes `single_media_selection`: eine kompakte Zeile mit Icon und Namen, links ein Button zum Öffnen der
+Auswahl, rechts ein Papierkorb zum Entfernen. Die Auswahl selbst läuft über ein Overlay mit Suchfeld und einem
+Raster aller Icons des Sets. Im Frontend gibt die Twig-Funktion `sulu_icon()` das gespeicherte Icon aus — ganz
+ohne Icon-Font.
 
 Aktuell enthaltenes Icon-Set (Pool): **Bootstrap Icons** (`bootstrap-icons`, MIT).
 
@@ -11,7 +13,7 @@ Aktuell enthaltenes Icon-Set (Pool): **Bootstrap Icons** (`bootstrap-icons`, MIT
 ## Verwendung im Formular-XML
 
 ```xml
-<property name="icon" type="icon_picker">
+<property name="icon" type="single_icon_selection">
     <meta>
         <title lang="de">Icon</title>
         <title lang="en">Icon</title>
@@ -31,12 +33,13 @@ vorhandene Inhalte nicht kaputt.
 
 ## Verhalten
 
-- Die Vorschau zeigt das gewählte Icon selbst (aus dem Sprite gerendert), darunter seinen Namen.
-- Klick oder <kbd>Enter</kbd> auf die Vorschau öffnet das Overlay. Die Suche filtert beim Tippen nach Namen;
-  mehrere Wörter müssen alle vorkommen (`house door` → `house-door`, `house-door-fill`).
+- Die Zeile zeigt das gewählte Icon selbst (aus dem Sprite gerendert) neben seinem Namen, wie bei einer
+  Medienauswahl.
+- Der Button links öffnet das Overlay. Die Suche filtert beim Tippen nach Namen; mehrere Wörter müssen alle
+  vorkommen (`house door` → `house-door`, `house-door-fill`).
 - Klick markiert eine Kachel, **Bestätigen** übernimmt sie. Doppelklick übernimmt direkt.
-- Das Papierkorb-Symbol in der Ecke entfernt die Auswahl.
-- Sichtbare Fehlermeldung statt leerer Vorschau, wenn
+- Das Papierkorb-Symbol rechts entfernt die Auswahl.
+- Sichtbare Fehlermeldung statt einer stillschweigend leeren Zeile, wenn
   - das Icon im Set nicht mehr existiert (z. B. bei einem Bootstrap-Icons-Update umbenannt),
   - das gespeicherte oder konfigurierte Set nicht registriert ist.
 
